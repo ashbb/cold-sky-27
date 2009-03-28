@@ -3,6 +3,7 @@ require 'sinatra'
 require 'net/http'
 require 'rexml/document'
 require 'cgi'
+require 'xml'
 
 HOST = 'twitter.com'
 PORT = 80
@@ -44,27 +45,34 @@ def get_friends_timeline n = nil
                                       e.text('text').delete("\n"),
                                       e.text('created_at'))
   end
-  
-  result = %Q[<http><body>\
-<form action='/posting' method='post' accept-charset='utf-8'>\
-<input type='text' name='str' id='str' maxlength=140 size=140>\
-<input type='submit' value='post'>\
-</form><br>]
+  xml_gen twitters
+end
 
-  page = %Q[<http><body>\
-<form action='/page' method='post' accept-charset='utf-8'>\
-<input type='text' name='str' id='str' maxlength=3 size=3>\
-<input type='submit' value='page'>\
-</form></body></http>]
-  
-  twitters.each do |tw|
-    result << '<font color=blue>' << tw.screen_name << '</font> '
-    result << '(' << tw.name << ') : '
-    #result << tw.location << '<br>'
-    result << tw.text << '<br>'
-    result << tw.created_at << '<br><br>'
+def xml_gen twitters
+  XML.generate do
+    html do
+      body do
+        form :action => '/posting', :method => 'post', :'accept-charset' => 'utf-8' do
+          input :type => 'text', :name => 'str', :maxlength => 140, :size => 140
+          input :type => 'submit', :value => 'post'
+        end
+        
+        twitters.each do |tw|
+          font(:color => 'blue'){tw.screen_name}
+          content " (#{tw.name}) : #{tw.text}"
+          br
+          content tw.created_at
+          br
+          br
+        end
+      
+        form :action => '/page', :method => 'post',  :'accept-charset' => 'utf-8' do
+          input :type => 'text', :name => 'str', :maxlength => 3, :size => 3
+          input :type => 'submit', :value => 'page'
+        end
+      end
+    end
   end
-  result << page
 end
 
 def post_update data
@@ -79,12 +87,18 @@ def post_update data
 end
 
 def authentification
-  %Q[<http><body>\
-Twitter Client v0.1 \
-<form action='/init' method='post' accept-charset='utf-8'>\
-User name: <input type='text' name='id'>\
- Password : <input type='password' name='pw'>\
-<input type='submit' value='ok'>\
-</form></body></http>]
+  XML.generate do
+    http do
+      body do
+        content 'Twitter Client v0.1'
+        form :action => '/init', :method => 'post', :'accept-charset' => 'utf-8' do
+          content 'User name: '
+          input :type => 'text', :name => 'id'
+          content 'Password : '
+          input :type => 'password', :name =>'pw'
+          input :type => 'submit', :value => 'ok'
+        end
+      end
+    end
+  end
 end
-  
