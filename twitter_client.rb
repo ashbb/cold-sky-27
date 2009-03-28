@@ -7,12 +7,15 @@ require 'cgi'
 HOST = 'twitter.com'
 PORT = 80
 PATH = '/statuses/friends_timeline.xml'
-USER = 'ashbb'
-PW = 'asakawa1'
 
 Twitter = Struct.new :name, :screen_name, :location, :avatar, :text, :created_at
 
 get '/' do
+  authentification
+end
+
+post '/init' do
+  @@id, @@pw = params[:id], params[:pw]
   get_friends_timeline
 end
 
@@ -28,7 +31,7 @@ end
 def get_friends_timeline n = nil
   Net::HTTP.version_1_2
   req = Net::HTTP::Get.new(n ? PATH + "?page=#{n}" : PATH)
-  req.basic_auth USER, PW
+  req.basic_auth @@id, @@pw
   xml = ''
   Net::HTTP.start(HOST, PORT) {|http| xml << http.request(req).body}
   
@@ -69,9 +72,19 @@ def post_update data
   data = CGI.escape data
   Net::HTTP.version_1_2
   req = Net::HTTP::Post.new("http://twitter.com/statuses/update.xml?status=#{data}") 
-  req.basic_auth USER, PW
+  req.basic_auth @@id, @@pw
   xml = ''
   Net::HTTP.start(HOST, PORT) {|http| xml << http.request(req).body}
   xml
+end
+
+def authentification
+  %Q[<http><body>\
+Twitter Client v0.1 \
+<form action='/init' method='post' accept-charset='utf-8'>\
+User name: <input type='text' name='id'>\
+ Password : <input type='password' name='pw'>\
+<input type='submit' value='ok'>\
+</form></body></http>]
 end
   
