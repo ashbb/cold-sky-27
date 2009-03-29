@@ -58,8 +58,9 @@ def xml_gen twitters
         end
         
         twitters.each do |tw|
-          font(:color => 'blue'){tw.screen_name}
-          content " (#{tw.name}) : #{tw.text}"
+          img :src => tw.avatar, :alt => tw.name, :width => 25, :height => 25
+          font(:color => 'blue'){' ' + tw.screen_name}
+          content [" : " , tw.text]
           br
           content tw.created_at
           br
@@ -90,7 +91,7 @@ def authentification
   XML.generate do
     http do
       body do
-        content 'Twitter Client v0.1'
+        content 'Twitter Client v0.2'
         form :action => '/init', :method => 'post', :'accept-charset' => 'utf-8' do
           content 'User name: '
           input :type => 'text', :name => 'id'
